@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0e121a">
+<title>小哭包和宝宝的周末旅行日记 · 冒险集</title>
+<meta name="description" content="小哭包和宝宝的周末旅行日记与冒险集，记录每一个心动周末。">
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%90%BE%3C/text%3E%3C/svg%3E">
+
+<link rel="preload" as="image" href="assets/__HERO__.webp" type="image/webp">
+
+<style>
+  :root {
+    --brand-pink: #ff6b81;
+    --brand-gold: #ffb142;
+    --brand-dark: #2f3542;
+    --paper-bg: #fffdf8;
+    --paper-line: #f1ebd9;
+    --text-main: #332d29;
+    --text-muted: #8c827a;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: #0e121a;
+    color: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC",
+                 "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* 动态融合背景：复用当前随机封面色彩 */
+  .ambient-bg {
+    position: fixed;
+    top: -24px; left: -24px; right: -24px; bottom: -24px;
+    background-size: cover;
+    background-position: center;
+    filter: blur(40px) brightness(0.65);
+    transform: scale(1.1);
+    opacity: 0.85;
+    pointer-events: none;
+    z-index: 1;
+    transition: opacity .5s ease;
+  }
+
+  /* 首页海报舞台 */
+  .stage {
+    position: relative;
+    z-index: 2;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    max-width: calc(100dvh * 576 / 1024);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    animation: rise .6s cubic-bezier(.2, .7, .25, 1) both;
+  }
+
+  .stage picture,
+  .stage img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 576 / 1024;
+    object-fit: contain;
+  }
+
+  /* 底部悬浮手账入口胶囊 */
+  .diary-trigger {
+    position: fixed;
+    bottom: max(22px, env(safe-area-inset-bottom, 22px));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.95);
+    border-radius: 9999px;
+    box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.3);
+    color: #2c3e50;
+    font-size: 14.5px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    cursor: pointer;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: all .25s cubic-bezier(.2, .8, .2, 1);
+    animation: pillFloat 3s ease-in-out infinite;
+  }
+
+  .diary-trigger:hover,
+  .diary-trigger:active {
+    transform: translateX(-50%) scale(1.05);
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 14px 40px -4px rgba(255, 107, 129, 0.35);
+  }
+
+  .diary-trigger .icon { font-size: 18px; line-height: 1; }
+  .diary-trigger .badge {
+    background: linear-gradient(135deg, #ff7675, #e84393);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+    margin-left: 2px;
+  }
+
+  /* ========================================================
+     第一层：冒险手账目录页 (Adventure Catalog Modal)
+     ======================================================== */
+  .catalog-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    background: rgba(12, 16, 24, 0.96);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .35s cubic-bezier(.2, .8, .2, 1), visibility .35s;
+  }
+
+  .catalog-modal.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .catalog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: max(16px, env(safe-area-inset-top, 16px)) 20px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .catalog-title-group h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #ffffff;
+  }
+  .catalog-title-group p {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .catalog-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 16px max(30px, env(safe-area-inset-bottom, 30px));
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+  }
+  .catalog-scroll::-webkit-scrollbar { width: 4px; }
+  .catalog-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+  /* 冒险卡片 (Adventure Card) */
+  .adventure-card {
+    width: 100%;
+    max-width: 440px;
+    background: #ffffff;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all .25s cubic-bezier(.2, .8, .2, 1);
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  .adventure-card:hover,
+  .adventure-card:active {
+    transform: translateY(-3px) scale(1.01);
+    box-shadow: 0 16px 40px rgba(255, 107, 129, 0.25);
+  }
+
+  .card-banner {
+    position: relative;
+    width: 100%;
+    height: 180px;
+    background: #2d3436;
+    overflow: hidden;
+  }
+  .card-banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    transition: transform .4s ease;
+  }
+  .adventure-card:hover .card-banner img { transform: scale(1.05); }
+
+  .card-vol-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(12, 16, 24, 0.85);
+    backdrop-filter: blur(10px);
+    color: #ff7675;
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .card-status-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: linear-gradient(135deg, #ff7675, #e84393);
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    max-width: 60%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .card-body {
+    padding: 14px 16px 16px;
+  }
+
+  .card-body h3 {
+    margin: 0 0 6px;
+    font-size: 17px;
+    font-weight: 700;
+    color: #2d3436;
+  }
+
+  .card-desc {
+    margin: 0 0 12px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    line-height: 1.45;
+  }
+
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .card-tag {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: #f8f6f0;
+    color: #635b53;
+    border: 1px solid #eae4d3;
+    font-weight: 500;
+  }
+
+  .card-action-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 10px;
+    border-top: 1px dashed #f0ece1;
+    font-size: 13px;
+    font-weight: 600;
+    color: #ff7675;
+  }
+
+  /* 筹备中卡片 */
+  .adventure-card.locked {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px dashed rgba(255, 255, 255, 0.18);
+    box-shadow: none;
+    cursor: default;
+    color: rgba(255, 255, 255, 0.85);
+  }
+  .adventure-card.locked:hover { transform: none; box-shadow: none; }
+  .adventure-card.locked .card-banner {
+    background: rgba(255, 255, 255, 0.03);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    opacity: 0.6;
+  }
+  .adventure-card.locked .card-body h3 { color: #ffffff; }
+  .adventure-card.locked .card-desc { color: rgba(255, 255, 255, 0.5); }
+  .adventure-card.locked .card-action-bar {
+    color: rgba(255, 255, 255, 0.4);
+    border-top-color: rgba(255, 255, 255, 0.1);
+  }
+
+  /* ========================================================
+     第二层：专属冒险画册阅读器 (Story Reader Modal)
+     ======================================================== */
+  .story-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(12, 16, 24, 0.97);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .35s cubic-bezier(.2, .8, .2, 1), visibility .35s;
+  }
+
+  .story-modal.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .modal-header {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    z-index: 110;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: max(12px, env(safe-area-inset-top, 12px)) 16px 10px;
+    background: linear-gradient(180deg, rgba(12, 16, 24, 0.95) 0%, rgba(12, 16, 24, 0) 100%);
+  }
+
+  .modal-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .btn-back-catalog {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 6px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .btn-back-catalog:hover { background: rgba(255, 255, 255, 0.22); }
+
+  .current-vol-label {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #ff7675;
+    letter-spacing: .04em;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .btn-close {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    cursor: pointer;
+    transition: all .2s ease;
+  }
+  .btn-close:hover { background: rgba(255, 255, 255, 0.3); transform: scale(1.08); }
+
+  .chapter-tabs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    padding-bottom: 2px;
+  }
+  .chapter-tabs::-webkit-scrollbar { display: none; }
+
+  .chapter-tab {
+    padding: 5px 11px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all .2s ease;
+  }
+  .chapter-tab.active {
+    background: rgba(255, 255, 255, 0.95);
+    color: #1e272e;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  }
+  .chapter-tab.highlight { border-color: rgba(255, 118, 117, 0.6); }
+  .chapter-tab.highlight.active {
+    background: linear-gradient(135deg, #ff7675, #e84393);
+    color: #ffffff;
+  }
+
+  /* 手账滑块容器 */
+  .story-viewport {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .story-viewport::-webkit-scrollbar { display: none; }
+
+  .story-slide {
+    flex: 0 0 100%;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 100%;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 90px 0 68px;
+    box-sizing: border-box;
+  }
+
+  .story-slide picture,
+  .story-slide img {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    aspect-ratio: 576 / 1024;
+    object-fit: contain;
+    user-select: none;
+    -webkit-user-drag: none;
+    border-radius: 8px;
+  }
+
+  /* ========================================================
+     第 4 站：独家游玩相册页 (Album Slide)
+     ======================================================== */
+  .album-slide {
+    padding: 90px 14px 68px;
+    align-items: stretch;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .album-book {
+    width: 100%;
+    max-width: 480px;
+    min-width: 0;
+    height: 100%;
+    margin: 0 auto;
+    background: var(--paper-bg);
+    border-radius: 18px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(220, 210, 190, 0.6);
+    box-sizing: border-box;
+  }
+
+  .album-tape {
+    position: absolute;
+    top: -6px; left: 50%;
+    transform: translateX(-50%);
+    width: 100px; height: 18px;
+    background: rgba(255, 205, 86, 0.85);
+    border-radius: 2px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    z-index: 10;
+  }
+
+  .album-content-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 16px 20px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .album-content-scroll::-webkit-scrollbar { width: 5px; }
+  .album-content-scroll::-webkit-scrollbar-thumb {
+    background: rgba(140, 130, 120, 0.25);
+    border-radius: 4px;
+  }
+
+  .album-header-card {
+    text-align: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px dashed var(--paper-line);
+  }
+  .album-header-card h2 {
+    margin: 0 0 6px;
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .album-header-card p {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--text-muted);
+  }
+
+  /* 上传照片快捷操作区 */
+  .album-upload-box {
+    background: #ffffff;
+    border: 2px dashed #e2dac7;
+    border-radius: 14px;
+    padding: 11px 13px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .album-upload-box:hover {
+    border-color: #ff7675;
+    background: #fffafa;
+  }
+
+  .upload-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+  }
+  .upload-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #fff0f3;
+    color: #e84118;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .upload-texts {
+    flex: 1;
+    min-width: 0;
+  }
+  .upload-texts strong {
+    display: block;
+    font-size: 13.5px;
+    color: var(--text-main);
+    margin-bottom: 2px;
+  }
+  .upload-texts span {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .btn-pick-photo {
+    flex-shrink: 0;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #ff7675, #e84393);
+    color: #fff;
+    font-size: 11.5px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(232, 67, 147, 0.25);
+  }
+
+  /* 照片瀑布流/网格 */
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .photo-card {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 8px 8px 10px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    position: relative;
+    border: 1px solid #f0eae1;
+    display: flex;
+    flex-direction: column;
+    animation: fadeIn .35s ease;
+    cursor: pointer;
+    transition: transform .2s, box-shadow .2s;
+  }
+  .photo-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  }
+
+  .photo-img-wrap {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #f1ebd9;
+    position: relative;
+  }
+  .photo-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform .3s;
+  }
+  .photo-card:hover .photo-img-wrap img {
+    transform: scale(1.04);
+  }
+
+  .photo-desc-bar {
+    margin-top: 8px;
+    padding: 0 2px;
+  }
+  .photo-caption {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-main);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-bottom: 2px;
+  }
+  .photo-date {
+    font-size: 10.5px;
+    color: var(--text-muted);
+  }
+
+  .btn-delete-photo {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    border: none;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.85;
+    z-index: 5;
+    transition: all .2s;
+  }
+  .btn-delete-photo:hover {
+    background: #e74c3c;
+    opacity: 1;
+    transform: scale(1.1);
+  }
+
+  .photo-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px 10px;
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  /* 全屏大图查看器 (Lightbox) */
+  .lightbox-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 250;
+    background: rgba(0, 0, 0, 0.95);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: all .25s ease;
+    padding: 20px;
+  }
+  .lightbox-modal.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+  .lightbox-img {
+    max-width: 100%;
+    max-height: 85vh;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  }
+  .lightbox-caption {
+    margin-top: 14px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+  }
+  .lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+  }
+
+  /* ========================================================
+     第 5 站：游玩体验感言页 (Note Slide)
+     ======================================================== */
+  .note-slide {
+    padding: 90px 14px 68px;
+    align-items: stretch;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .diary-book {
+    width: 100%;
+    max-width: 480px;
+    min-width: 0;
+    height: 100%;
+    margin: 0 auto;
+    background: var(--paper-bg);
+    border-radius: 18px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(220, 210, 190, 0.6);
+    box-sizing: border-box;
+  }
+
+  .diary-tape {
+    position: absolute;
+    top: -6px; left: 50%;
+    transform: translateX(-50%);
+    width: 100px; height: 18px;
+    background: rgba(255, 234, 167, 0.85);
+    border-radius: 2px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    z-index: 10;
+  }
+
+  .diary-content-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 22px 18px 20px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .diary-content-scroll::-webkit-scrollbar { width: 5px; }
+  .diary-content-scroll::-webkit-scrollbar-thumb {
+    background: rgba(140, 130, 120, 0.25);
+    border-radius: 4px;
+  }
+
+  .diary-header-card {
+    text-align: center;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 2px dashed var(--paper-line);
+  }
+  .diary-header-card h2 {
+    margin: 0 0 6px;
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .diary-header-card p {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--text-muted);
+  }
+
+  /* 表单 */
+  .diary-form {
+    background: #ffffff;
+    border: 1px solid var(--paper-line);
+    border-radius: 14px;
+    padding: 14px 14px 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+    margin-bottom: 22px;
+  }
+
+  .form-section-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    letter-spacing: .05em;
+  }
+
+  .author-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .author-chip {
+    padding: 7px 2px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    background: #f8f6f0;
+    border: 1px solid #eae4d3;
+    color: #635b53;
+    transition: all .2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .author-chip.active {
+    background: #fff0f3; border-color: #ff8597; color: #e84118;
+    box-shadow: 0 2px 8px rgba(255, 118, 117, 0.2);
+  }
+
+  .mood-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .mood-tag {
+    padding: 4px 9px; border-radius: 8px; font-size: 11.5px;
+    background: #f8f6f0; color: #716860; cursor: pointer;
+    border: 1px solid #eae4d3; transition: all .15s ease;
+  }
+  .mood-tag.active {
+    background: #ffeaa7; border-color: #fdcb6e; color: #d35400; font-weight: 600;
+  }
+
+  .diary-textarea-box { position: relative; margin-bottom: 12px; }
+  .diary-textarea {
+    width: 100%; height: 84px; padding: 10px 12px;
+    border-radius: 10px; border: 1px solid #e2dac7; background: #faf8f2;
+    color: var(--text-main); font-size: 13.5px; line-height: 1.5; font-family: inherit;
+    resize: none; outline: none; transition: border .2s;
+  }
+  .diary-textarea:focus {
+    border-color: #ff7675; background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(255, 118, 117, 0.15);
+  }
+  .char-count { position: absolute; right: 10px; bottom: 8px; font-size: 11px; color: #a4b0be; }
+
+  .btn-submit-note {
+    width: 100%; padding: 11px; border-radius: 12px;
+    background: linear-gradient(135deg, #ff7675 0%, #e84393 100%);
+    color: #ffffff; border: none; font-size: 14px; font-weight: 700;
+    letter-spacing: .08em; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(232, 67, 147, 0.35);
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: all .2s ease;
+  }
+  .btn-submit-note:hover { transform: translateY(-1px); }
+  .btn-submit-note:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* 历史手账便签 */
+  .history-section-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+  }
+  .history-title {
+    font-size: 14px; font-weight: 700; color: var(--text-main);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .note-list { display: flex; flex-direction: column; gap: 12px; }
+  .note-card {
+    background: #ffffff; border-radius: 12px; padding: 12px 14px;
+    border-left: 4px solid #ff7675; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+    animation: fadeIn .4s ease;
+  }
+  .note-card.author-baby { border-left-color: #f39c12; }
+  .note-card.author-both { border-left-color: #9b59b6; }
+  .note-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .note-author-tag {
+    font-size: 12px; font-weight: 700; color: var(--text-main);
+    display: flex; align-items: center; gap: 4px;
+  }
+  .note-mood-badge {
+    font-size: 11px; background: #fdf2e9; color: #e67e22; padding: 2px 6px; border-radius: 6px; font-weight: 600;
+  }
+  .note-time { font-size: 11px; color: #b2bec3; }
+  .note-body { font-size: 13.5px; color: #485460; line-height: 1.55; word-break: break-word; white-space: pre-wrap; }
+  .note-empty { text-align: center; padding: 28px 10px; color: var(--text-muted); font-size: 13px; line-height: 1.6; }
+
+  /* 提示 Toast */
+  .diary-toast {
+    position: fixed; top: 60px; left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: rgba(45, 52, 54, 0.95); color: #ffffff;
+    padding: 10px 20px; border-radius: 30px; font-size: 13.5px; font-weight: 600;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3); z-index: 300; opacity: 0; pointer-events: none;
+    transition: all .3s cubic-bezier(.2, .8, .2, 1);
+  }
+  .diary-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* 底部指示栏 */
+  .modal-footer {
+    position: absolute; bottom: 0; left: 0; right: 0; z-index: 110;
+    padding: 10px 16px max(14px, env(safe-area-inset-bottom, 14px));
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    background: linear-gradient(0deg, rgba(12, 16, 24, 0.94) 0%, rgba(12, 16, 24, 0) 100%);
+    pointer-events: none;
+  }
+  .pagination-dots { display: flex; gap: 8px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, 0.25); transition: all .25s ease; }
+  .dot.active { width: 22px; border-radius: 6px; background: #ff7675; }
+  .footer-hint { font-size: 12px; color: rgba(255, 255, 255, 0.65); letter-spacing: .08em; }
+
+  /* 左右切换箭头 */
+  .nav-arrow {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 22px; cursor: pointer; z-index: 105; transition: all .2s;
+  }
+  .nav-arrow:hover { background: rgba(255, 255, 255, 0.3); transform: translateY(-50%) scale(1.1); }
+  .nav-prev { left: 16px; }
+  .nav-next { right: 16px; }
+
+  @media (max-width: 600px) { .nav-arrow { display: none; } }
+  @keyframes pillFloat {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50%      { transform: translateX(-50%) translateY(-5px); }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: scale(.98); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+</style>
+</head>
+<body>
+  <!-- 首页全屏海报与动态微光 -->
+  <div class="ambient-bg" style="background-image: url('assets/__HERO__.webp');"></div>
+
+  <main class="stage">
+    <h1 class="sr-only">小哭包和宝宝的周末旅行日记</h1>
+    <picture>
+      <source type="image/webp" srcset="assets/__HERO__.webp">
+      <img src="assets/__HERO__.jpg" alt="__HERO_ALT__" width="576" height="1024" fetchpriority="high" decoding="async">
+    </picture>
+  </main>
+
+  <!-- 首页底部唤起手账目录入口按钮 -->
+  <button class="diary-trigger" id="openCatalog" aria-label="翻开旅行手账">
+    <span class="icon">🗺️</span>
+    <span>翻开旅行手账</span>
+    <span class="badge">Vol.01 探索中 ➜</span>
+  </button>
+
+  <!-- ========================================================
+       第一层：冒险足迹手账目录页 (Adventure Catalog)
+       ======================================================== -->
+  <div class="catalog-modal" id="catalogModal" role="dialog" aria-modal="true" aria-label="旅行冒险目录">
+    <header class="catalog-header">
+      <div class="catalog-title-group">
+        <h2>🗺️ 我们的旅行冒险集</h2>
+        <p>每一次周末出发，都是只属于我们的小奇迹~</p>
+      </div>
+      <button class="btn-close" id="closeCatalog" aria-label="关闭目录">✕</button>
+    </header>
+
+    <div class="catalog-scroll">
+      <!-- 冒险 1：重庆篇 (已解锁，点击进入画册) -->
+      <article class="adventure-card" id="cardChongqing" data-adventure="chongqing">
+        <div class="card-banner">
+          <img src="assets/story-1.webp" alt="山城江景与熊猫大冒险">
+          <span class="card-vol-badge">Vol.01</span>
+          <span class="card-status-badge" id="cardChongqingBadge">✨ 3篇路线 · 0图 · 1感言</span>
+        </div>
+        <div class="card-body">
+          <h3>山城江景与熊猫大冒险</h3>
+          <p class="card-desc">从大学城出发，漫步千厮门钻石广场看浪漫江景，夜宿动物园看大熊猫滚滚！</p>
+          <div class="card-tags">
+            <span class="card-tag">📍 重庆</span>
+            <span class="card-tag">🚇 3篇手绘路线图</span>
+            <span class="card-tag" id="tagPhotoCount">📷 游玩相册 (0张)</span>
+            <span class="card-tag" id="tagNoteCount">✍️ 游玩感言 (1条)</span>
+          </div>
+          <div class="card-action-bar">
+            <span>📖 翻开冒险画册 (全3篇+相册+感言)</span>
+            <span>➜</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- 冒险 2：下一站筹备中 (预告占位卡片) -->
+      <article class="adventure-card locked">
+        <div class="card-banner">
+          <span>🎒</span>
+          <span class="card-vol-badge">Vol.02</span>
+          <span class="card-status-badge" style="background: rgba(255,255,255,0.2);">🔒 筹备中</span>
+        </div>
+        <div class="card-body">
+          <h3>下一站心动大冒险</h3>
+          <p class="card-desc">神秘目的地策划中... 可能是火锅慢城，也可能是海风环岛，敬请期待下一个周末！</p>
+          <div class="card-tags">
+            <span class="card-tag">✨ 敬请期待</span>
+            <span class="card-tag">🐾 冒险待解锁</span>
+          </div>
+          <div class="card-action-bar">
+            <span>即将启程...</span>
+            <span>⏳</span>
+          </div>
+        </div>
+      </article>
+
+      <div style="text-align: center; color: rgba(255,255,255,0.4); font-size: 12px; padding: 10px 0 20px;">
+        ✦ 青春在继续，未来的每一次旅行都在路上 ✦
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       第二层：专属冒险画册阅读器 (Story Reader)
+       ======================================================== -->
+  <div class="story-modal" id="storyModal" role="dialog" aria-modal="true" aria-label="旅行手账画册">
+    <header class="modal-header">
+      <div class="modal-top-bar">
+        <button class="btn-back-catalog" id="backToCatalog">‹ 冒险目录</button>
+        <span class="current-vol-label" id="adventureTitle">Vol.01 重庆大冒险</span>
+        <button class="btn-close" id="closeDiary" aria-label="收起手账">✕</button>
+      </div>
+      <nav class="chapter-tabs" id="chapterTabs">
+        <button class="chapter-tab active" data-index="0">① 启程江景</button>
+        <button class="chapter-tab" data-index="1">② 宿与熊猫</button>
+        <button class="chapter-tab" data-index="2">③ 终章返校</button>
+        <button class="chapter-tab highlight" data-index="3">📷 游玩相册</button>
+        <button class="chapter-tab highlight" data-index="4">✍️ 游玩感言</button>
+      </nav>
+    </header>
+
+    <button class="nav-arrow nav-prev" id="prevSlide" aria-label="上一页">‹</button>
+    <button class="nav-arrow nav-next" id="nextSlide" aria-label="下一页">›</button>
+
+    <!-- 丝滑滑动手账视口 (共 5 个 Slide) -->
+    <div class="story-viewport" id="storyViewport">
+      <!-- 篇章 1 -->
+      <section class="story-slide" data-index="0">
+        <picture>
+          <source type="image/webp" srcset="assets/story-1.webp">
+          <img src="assets/story-1.jpg" alt="小哭包和宝宝的周末旅行日记 · 重庆江景路线图" loading="lazy">
+        </picture>
+      </section>
+
+      <!-- 篇章 2 -->
+      <section class="story-slide" data-index="1">
+        <picture>
+          <source type="image/webp" srcset="assets/story-2.webp">
+          <img src="assets/story-2.jpg" alt="小哭包和宝宝的周末旅行日记 · 江景之夜 · 熊猫之约" loading="lazy">
+        </picture>
+      </section>
+
+      <!-- 篇章 3 -->
+      <section class="story-slide" data-index="2">
+        <picture>
+          <source type="image/webp" srcset="assets/story-3.webp">
+          <img src="assets/story-3.jpg" alt="小哭包和宝宝的周末旅行日记 · 终章 · 熊猫拜拜，我们回大学城啦！" loading="lazy">
+        </picture>
+      </section>
+
+      <!-- 篇章 4：独家游玩相册页 (Album Slide) -->
+      <section class="story-slide album-slide" data-index="3">
+        <div class="album-book">
+          <div class="album-tape"></div>
+          <div class="album-content-scroll">
+            <div class="album-header-card">
+              <h2>📷 专属游玩相册</h2>
+              <p>永久保存属于我们的每一个心动与欢笑瞬间 ✨</p>
+            </div>
+
+            <!-- 上传交互区 -->
+            <div class="album-upload-box" id="uploadCardTrigger">
+              <div class="upload-left">
+                <div class="upload-icon">📸</div>
+                <div class="upload-texts">
+                  <strong>上传游玩照片</strong>
+                  <span>支持拍照或从手机相册选取</span>
+                </div>
+              </div>
+              <button type="button" class="btn-pick-photo" id="btnPickPhoto">+ 添加照片</button>
+              <input type="file" id="photoFileInput" accept="image/*" multiple style="display:none;">
+            </div>
+
+            <!-- 照片拍立得网格 -->
+            <div class="photo-grid" id="photoGrid">
+              <div class="photo-empty">正在加载我们的美好瞬间...</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 篇章 5：专属游玩体验感言页 (Note Slide) -->
+      <section class="story-slide note-slide" data-index="4">
+        <div class="diary-book">
+          <div class="diary-tape"></div>
+          <div class="diary-content-scroll">
+            <div class="diary-header-card">
+              <h2>📖 今日游玩手账</h2>
+              <p>写下今天的感动与回忆，永远珍藏在这里~</p>
+            </div>
+
+            <form class="diary-form" id="diaryForm">
+              <div class="form-section-title">✍️ 记录人</div>
+              <div class="author-selector" id="authorSelector">
+                <div class="author-chip active" data-author="小哭包">🐶 小哭包</div>
+                <div class="author-chip" data-author="宝宝">🐻 宝宝</div>
+                <div class="author-chip" data-author="小哭包与宝宝">❤️ 我们俩</div>
+              </div>
+
+              <div class="form-section-title">✨ 今日心情便签</div>
+              <div class="mood-tags" id="moodSelector">
+                <span class="mood-tag active" data-mood="💕 超开心">💕 超开心</span>
+                <span class="mood-tag" data-mood="☀️ 晴空万里">☀️ 晴空万里</span>
+                <span class="mood-tag" data-mood="🐼 滚滚太治愈了">🐼 滚滚太治愈了</span>
+                <span class="mood-tag" data-mood="🌃 醉人江景">🌃 醉人江景</span>
+                <span class="mood-tag" data-mood="🍡 夜市吃撑啦">🍡 夜市吃撑啦</span>
+              </div>
+
+              <div class="diary-textarea-box">
+                <textarea class="diary-textarea" id="noteInput" maxlength="300" placeholder="写下今天的心情、好玩的瞬间或想对彼此说的话..."></textarea>
+                <div class="char-count"><span id="charNum">0</span>/300</div>
+              </div>
+
+              <button type="submit" class="btn-submit-note" id="submitBtn">
+                <span>💌 珍藏并发表感言</span>
+              </button>
+            </form>
+
+            <div class="history-section-header">
+              <span class="history-title">🐾 历史感言手账 (<span id="noteTotal">0</span>)</span>
+            </div>
+            <div class="note-list" id="noteList">
+              <div class="note-empty">还没有写下感言呢，快来做第一个记录回忆的人吧~ 🐾</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- 底部指示栏 -->
+    <footer class="modal-footer">
+      <div class="pagination-dots" id="dotsContainer">
+        <span class="dot active"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+      </div>
+      <div class="footer-hint" id="footerHint">第 1 / 5 站 · 重庆江景路线图</div>
+    </footer>
+  </div>
+
+  <!-- 全屏照片查看器 Lightbox -->
+  <div class="lightbox-modal" id="lightboxModal" role="dialog" aria-modal="true">
+    <button class="lightbox-close" id="closeLightbox">✕</button>
+    <img src="" alt="大图查看" class="lightbox-img" id="lightboxImg">
+    <div class="lightbox-caption" id="lightboxCaption"></div>
+  </div>
+
+  <!-- 轻量提示 Toast -->
+  <div class="diary-toast" id="diaryToast"></div>
+
+  <script>
+    (function() {
+      // 元素引用
+      const openCatalogBtn = document.getElementById('openCatalog');
+      const closeCatalogBtn = document.getElementById('closeCatalog');
+      const catalogModal = document.getElementById('catalogModal');
+      const cardChongqing = document.getElementById('cardChongqing');
+
+      const storyModal = document.getElementById('storyModal');
+      const closeDiaryBtn = document.getElementById('closeDiary');
+      const backToCatalogBtn = document.getElementById('backToCatalog');
+      const adventureTitle = document.getElementById('adventureTitle');
+      const viewport = document.getElementById('storyViewport');
+      const tabs = document.querySelectorAll('.chapter-tab');
+      const dots = document.querySelectorAll('.dot');
+      const hint = document.getElementById('footerHint');
+      const prevBtn = document.getElementById('prevSlide');
+      const nextBtn = document.getElementById('nextSlide');
+      const toast = document.getElementById('diaryToast');
+
+      // 相册元素
+      const uploadCardTrigger = document.getElementById('uploadCardTrigger');
+      const btnPickPhoto = document.getElementById('btnPickPhoto');
+      const photoFileInput = document.getElementById('photoFileInput');
+      const photoGrid = document.getElementById('photoGrid');
+      const tagPhotoCount = document.getElementById('tagPhotoCount');
+      const cardChongqingBadge = document.getElementById('cardChongqingBadge');
+      const lightboxModal = document.getElementById('lightboxModal');
+      const lightboxImg = document.getElementById('lightboxImg');
+      const lightboxCaption = document.getElementById('lightboxCaption');
+      const closeLightbox = document.getElementById('closeLightbox');
+
+      // 感言元素
+      const diaryForm = document.getElementById('diaryForm');
+      const noteInput = document.getElementById('noteInput');
+      const charNum = document.getElementById('charNum');
+      const submitBtn = document.getElementById('submitBtn');
+      const noteList = document.getElementById('noteList');
+      const noteTotal = document.getElementById('noteTotal');
+      const tagNoteCount = document.getElementById('tagNoteCount');
+      const authorChips = document.querySelectorAll('.author-chip');
+      const moodTags = document.querySelectorAll('.mood-tag');
+
+      const titles = [
+        '第 1 / 5 站 · 重庆江景路线图',
+        '第 2 / 5 站 · 江景之夜 · 熊猫之约',
+        '第 3 / 5 站 · 终章 · 熊猫拜拜返校',
+        '第 4 / 5 站 · 专属游玩相册墙',
+        '第 5 / 5 站 · 今日游玩体验感言'
+      ];
+
+      let currentAdventure = 'chongqing';
+      let currentIndex = 0;
+      let selectedAuthor = '小哭包';
+      let selectedMood = '💕 超开心';
+      let notesCount = 0;
+      let photosCount = 0;
+
+      function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2600);
+      }
+
+      function updateCatalogSummary() {
+        if (cardChongqingBadge) {
+          cardChongqingBadge.textContent = `✨ 3篇路线 · ${photosCount}图 · ${notesCount}感言`;
+        }
+        if (tagPhotoCount) {
+          tagPhotoCount.textContent = `📷 游玩相册 (${photosCount}张)`;
+        }
+        if (tagNoteCount) {
+          tagNoteCount.textContent = `✍️ 游玩感言 (${notesCount}条)`;
+        }
+      }
+
+      // ==========================================
+      // 导航与层级路由
+      // ==========================================
+      function openCatalog() {
+        catalogModal.classList.add('active');
+        storyModal.classList.remove('active');
+        document.body.style.overflow = 'hidden';
+        if (location.hash !== '#catalog') {
+          history.pushState(null, '', '#catalog');
+        }
+        fetchPhotos(currentAdventure);
+        fetchNotes(currentAdventure);
+      }
+
+      function closeCatalog() {
+        catalogModal.classList.remove('active');
+        document.body.style.overflow = '';
+        if (location.hash === '#catalog') {
+          history.pushState(null, '', location.pathname + location.search);
+        }
+      }
+
+      function openAdventure(advId, targetSlideIdx = 0) {
+        currentAdventure = advId || 'chongqing';
+        if (advId === 'chongqing') {
+          adventureTitle.textContent = 'Vol.01 山城江景与熊猫大冒险';
+        }
+
+        catalogModal.classList.remove('active');
+        storyModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        const hashTag = targetSlideIdx === 3 ? '#photos' : (targetSlideIdx === 4 ? '#notes' : `#adventure-${currentAdventure}`);
+        if (location.hash !== hashTag) {
+          history.pushState(null, '', hashTag);
+        }
+
+        setTimeout(() => {
+          scrollToChapter(targetSlideIdx, true);
+          updateActiveState(targetSlideIdx);
+        }, 50);
+        fetchPhotos(currentAdventure);
+        fetchNotes(currentAdventure);
+      }
+
+      function closeStory() {
+        storyModal.classList.remove('active');
+        document.body.style.overflow = '';
+        history.pushState(null, '', location.pathname + location.search);
+      }
+
+      function backToCatalog() {
+        storyModal.classList.remove('active');
+        openCatalog();
+      }
+
+      function scrollToChapter(index, instant = false) {
+        if (index < 0 || index >= tabs.length) return;
+        const targetSlide = viewport.children[index];
+        if (targetSlide) {
+          viewport.scrollTo({
+            left: targetSlide.offsetLeft,
+            behavior: instant ? 'auto' : 'smooth'
+          });
+        }
+      }
+
+      function updateActiveState(index) {
+        if (index === currentIndex && tabs[index].classList.contains('active')) return;
+        currentIndex = index;
+
+        tabs.forEach((tab, i) => tab.classList.toggle('active', i === index));
+        dots.forEach((dot, i) => dot.classList.toggle('active', i === index));
+        if (titles[index]) hint.textContent = titles[index];
+
+        const activeTab = tabs[index];
+        if (activeTab) {
+          activeTab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+      }
+
+      let scrollTimer = null;
+      viewport.addEventListener('scroll', () => {
+        if (scrollTimer) clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(() => {
+          const width = viewport.clientWidth;
+          if (width > 0) {
+            const idx = Math.round(viewport.scrollLeft / width);
+            updateActiveState(idx);
+          }
+        }, 35);
+      }, { passive: true });
+
+      window.addEventListener('popstate', handleHashRouting);
+
+      function handleHashRouting() {
+        const hash = location.hash;
+        if (hash === '#catalog') {
+          openCatalog();
+        } else if (hash === '#photos' || hash === '#photo') {
+          openAdventure('chongqing', 3);
+        } else if (hash === '#note' || hash === '#notes') {
+          openAdventure('chongqing', 4);
+        } else if (hash.startsWith('#adventure-') || hash === '#diary') {
+          openAdventure('chongqing', 0);
+        } else {
+          catalogModal.classList.remove('active');
+          storyModal.classList.remove('active');
+          document.body.style.overflow = '';
+        }
+      }
+
+      openCatalogBtn.addEventListener('click', openCatalog);
+      closeCatalogBtn.addEventListener('click', closeCatalog);
+      cardChongqing.addEventListener('click', () => openAdventure('chongqing'));
+      backToCatalogBtn.addEventListener('click', backToCatalog);
+      closeDiaryBtn.addEventListener('click', closeStory);
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          const idx = parseInt(tab.dataset.index, 10);
+          scrollToChapter(idx);
+        });
+      });
+
+      if (prevBtn) prevBtn.addEventListener('click', () => scrollToChapter(currentIndex - 1));
+      if (nextBtn) nextBtn.addEventListener('click', () => scrollToChapter(currentIndex + 1));
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          if (lightboxModal.classList.contains('active')) closeLightboxView();
+          else if (storyModal.classList.contains('active')) backToCatalog();
+          else if (catalogModal.classList.contains('active')) closeCatalog();
+        }
+      });
+
+      if (location.hash) handleHashRouting();
+
+      // ==========================================
+      // 独家游玩相册逻辑 (Album Photos)
+      // ==========================================
+      function triggerUpload() {
+        photoFileInput.click();
+      }
+      btnPickPhoto.addEventListener('click', (e) => { e.stopPropagation(); triggerUpload(); });
+      uploadCardTrigger.addEventListener('click', triggerUpload);
+
+      photoFileInput.addEventListener('change', handlePhotoUpload);
+
+      function handlePhotoUpload(e) {
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+
+        showToast(`正在处理 ${files.length} 张照片... ⏳`);
+
+        let processed = 0;
+        files.forEach((file) => {
+          compressImage(file, 1920, 0.85, (base64Data) => {
+            const defaultCaption = `${file.name.replace(/\.[^/.]+$/, "")}`;
+            uploadPhotoToServer(base64Data, defaultCaption, () => {
+              processed++;
+              if (processed === files.length) {
+                showToast(`🎉 成功保存 ${files.length} 张照片到手账！`);
+                photoFileInput.value = '';
+                fetchPhotos(currentAdventure);
+              }
+            });
+          });
+        });
+      }
+
+      // 客户端图片智能压缩（防手机几千万像素大图爆显存与节省云端存储）
+      function compressImage(file, maxDimension, quality, callback) {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = function(evt) {
+          const img = new Image();
+          img.src = evt.target.result;
+          img.onload = function() {
+            let width = img.width;
+            let height = img.height;
+            if (width > maxDimension || height > maxDimension) {
+              if (width > height) {
+                height = Math.round((height * maxDimension) / width);
+                width = maxDimension;
+              } else {
+                width = Math.round((width * maxDimension) / height);
+                height = maxDimension;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            const dataUrl = canvas.toDataURL('image/jpeg', quality);
+            callback(dataUrl);
+          };
+        };
+      }
+
+      function uploadPhotoToServer(base64Data, caption, onDone) {
+        fetch('/api/photos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            activity_id: currentAdventure,
+            image_data: base64Data,
+            caption: caption
+          })
+        })
+        .then(res => res.json())
+        .then(result => {
+          if (onDone) onDone(result);
+        })
+        .catch(err => {
+          showToast('上传出错，请稍后再试');
+          if (onDone) onDone(null);
+        });
+      }
+
+      function fetchPhotos(activityId) {
+        fetch(`/api/photos?activity=${encodeURIComponent(activityId || currentAdventure)}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.success && Array.isArray(data.data)) {
+              photosCount = data.data.length;
+              renderPhotos(data.data);
+              updateCatalogSummary();
+            }
+          })
+          .catch(() => {
+            photoGrid.innerHTML = '<div class="photo-empty">加载相册稍慢，请稍后刷新~</div>';
+          });
+      }
+
+      function renderPhotos(photos) {
+        if (!photos.length) {
+          photoGrid.innerHTML = '<div class="photo-empty">还没有上传游玩照片呢，快把今天的抓拍留在这里吧~ 📸✨</div>';
+          return;
+        }
+
+        photoGrid.innerHTML = photos.map(item => `
+          <div class="photo-card" data-url="${escapeHtml(item.url)}" data-caption="${escapeHtml(item.caption || '')}">
+            <button class="btn-delete-photo" data-id="${item.id}" title="删除照片">✕</button>
+            <div class="photo-img-wrap">
+              <img src="${escapeHtml(item.url)}" alt="${escapeHtml(item.caption || '游玩照片')}" loading="lazy">
+            </div>
+            <div class="photo-desc-bar">
+              <div class="photo-caption">${escapeHtml(item.caption || '浪漫抓拍')}</div>
+              <div class="photo-date">${escapeHtml(item.created_at)}</div>
+            </div>
+          </div>
+        `).join('');
+
+        // 绑定点击大图查看
+        photoGrid.querySelectorAll('.photo-card').forEach(card => {
+          card.addEventListener('click', (e) => {
+            if (e.target.closest('.btn-delete-photo')) return;
+            const url = card.dataset.url;
+            const caption = card.dataset.caption;
+            openLightbox(url, caption);
+          });
+        });
+
+        // 绑定删除按钮
+        photoGrid.querySelectorAll('.btn-delete-photo').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = btn.dataset.id;
+            if (confirm('确定要从服务器相册删除这张照片吗？')) {
+              deletePhoto(id);
+            }
+          });
+        });
+      }
+
+      function deletePhoto(id) {
+        fetch('/api/photos/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: id })
+        })
+        .then(res => res.json())
+        .then(result => {
+          if (result.success) {
+            showToast('已从手账删除照片 🗑️');
+            fetchPhotos(currentAdventure);
+          } else {
+            showToast(result.error || '删除失败');
+          }
+        });
+      }
+
+      function openLightbox(url, caption) {
+        lightboxImg.src = url;
+        lightboxCaption.textContent = caption || '';
+        lightboxModal.classList.add('active');
+      }
+
+      function closeLightboxView() {
+        lightboxModal.classList.remove('active');
+        lightboxImg.src = '';
+      }
+
+      closeLightbox.addEventListener('click', closeLightboxView);
+      lightboxModal.addEventListener('click', (e) => {
+        if (e.target === lightboxModal || e.target === lightboxClose) closeLightboxView();
+      });
+
+      // ==========================================
+      // 感言逻辑 (Notes)
+      // ==========================================
+      authorChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          authorChips.forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+          selectedAuthor = chip.dataset.author;
+        });
+      });
+
+      moodTags.forEach(tag => {
+        tag.addEventListener('click', () => {
+          moodTags.forEach(t => t.classList.remove('active'));
+          tag.classList.add('active');
+          selectedMood = tag.dataset.mood;
+        });
+      });
+
+      noteInput.addEventListener('input', () => {
+        charNum.textContent = noteInput.value.length;
+      });
+
+      function fetchNotes(activityId) {
+        fetch(`/api/notes?activity=${encodeURIComponent(activityId || currentAdventure)}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.success && Array.isArray(data.data)) {
+              notesCount = data.data.length;
+              renderNotes(data.data);
+              updateCatalogSummary();
+            }
+          })
+          .catch(() => {
+            noteList.innerHTML = '<div class="note-empty">加载历史手账稍慢，请稍后刷新~</div>';
+          });
+      }
+
+      function renderNotes(notes) {
+        noteTotal.textContent = notes.length;
+        if (notes.length === 0) {
+          noteList.innerHTML = '<div class="note-empty">还没有写下感言呢，快来做第一个记录回忆的人吧~ 🐾</div>';
+          return;
+        }
+
+        noteList.innerHTML = notes.map(item => {
+          let authorClass = 'author-dog';
+          let avatar = '🐶';
+          if (item.nickname.includes('宝宝')) {
+            authorClass = 'author-baby';
+            avatar = '🐻';
+          }
+          if (item.nickname.includes('我们') || item.nickname.includes('一起')) {
+            authorClass = 'author-both';
+            avatar = '❤️';
+          }
+
+          return `
+            <article class="note-card ${authorClass}">
+              <div class="note-meta">
+                <div class="note-author-tag">
+                  <span>${avatar}</span>
+                  <strong>${escapeHtml(item.nickname)}</strong>
+                  <span class="note-mood-badge">${escapeHtml(item.mood || '💕')}</span>
+                </div>
+                <time class="note-time">${escapeHtml(item.created_at)}</time>
+              </div>
+              <div class="note-body">${escapeHtml(item.content)}</div>
+            </article>
+          `;
+        }).join('');
+      }
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>'"]/g, tag => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          "'": '&#39;',
+          '"': '&quot;'
+        }[tag] || tag));
+      }
+
+      diaryForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const content = noteInput.value.trim();
+        if (!content) {
+          showToast('请输入今天的心情感言哦~ ✍️');
+          noteInput.focus();
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = '珍藏中... ⏳';
+
+        fetch('/api/notes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nickname: selectedAuthor,
+            mood: selectedMood,
+            content: content,
+            activity_id: currentAdventure
+          })
+        })
+        .then(res => res.json())
+        .then(result => {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<span>💌 珍藏并发表感言</span>';
+
+          if (result.success && result.data) {
+            showToast('✨ 感言已写进旅行日记本！');
+            noteInput.value = '';
+            charNum.textContent = '0';
+            fetchNotes(currentAdventure);
+          } else {
+            showToast(result.error || '发表失败，请重试');
+          }
+        })
+        .catch(() => {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<span>💌 珍藏并发表感言</span>';
+          showToast('网络繁忙，请稍后再试~');
+        });
+      });
+
+      // 初始化拉取相册与感言
+      fetchPhotos('chongqing');
+      fetchNotes('chongqing');
+    })();
+  </script>
+</body>
+</html>

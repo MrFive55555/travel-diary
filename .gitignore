@@ -1,0 +1,52 @@
+# Byte-compiled / optimized / DLL files (Python 缓存文件)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments (虚拟环境)
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment variables & Secrets (敏感配置与私钥)
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Runtime data & Local databases (本地运行生成的数据、SQLite数据库与用户上传文件)
+*.db
+*.db-journal
+*.sqlite3
+diary_local.db
+uploads_local/
+server/diary.db
+server/uploads/
+uploads/
+
+# Log files (日志文件)
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Operating System files (系统临时文件)
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+
+# Editor & IDE files (开发工具配置与临时文件)
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
